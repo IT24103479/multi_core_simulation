@@ -204,5 +204,5 @@ def run_test(mode: str) -> None:
 # 🔹 Entry
 # -----------------------------
 if __name__ == "__main__":
-    run_test("uneven")   # dynamic should win
-    run_test("equal")    # static should win
+    run_test("uneven")   
+    run_test("equal")    
