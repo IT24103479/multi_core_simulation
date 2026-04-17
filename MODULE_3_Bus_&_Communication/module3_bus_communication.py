@@ -2,7 +2,7 @@
 ===============================================================
 Module 3: Bus & Communication Simulation
 IE2064 - Advanced Computer Organization & Architecture
-Assignment - Task 2.4
+Assignment 
 ===============================================================
 """
 
