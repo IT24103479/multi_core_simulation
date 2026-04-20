@@ -1,119 +1,153 @@
-import numpy as np
 import time
 import threading
 import multiprocessing
 
-# Matrix size (increase if needed for clearer results)
-SIZE = 1500
-
-# Generate matrices
-A = np.random.rand(SIZE, SIZE)
-B = np.random.rand(SIZE, SIZE)
+# ===============================
+# Workload 
+# ===============================
+N = 150000
 
 
-# -------------------------------
-# 1. Sequential Matrix Multiplication
-# -------------------------------
-def sequential_multiply(A, B):
-    return np.dot(A, B)
+# ===============================
+# CPU-bound task 
+# ===============================
+def heavy_task(start, end):
+    total = 0
+    for i in range(start, end):
+        for j in range(100):
+            total += i * j
+    return total
 
 
-# -------------------------------
-# 2. Multithreading Implementation
-# -------------------------------
-def thread_worker(A, B, result, start, end):
-    result[start:end] = np.dot(A[start:end], B)
+# ===============================
+# Sequential Execution
+# ===============================
+def sequential_execution(n):
+    return heavy_task(0, n)
 
 
-def threaded_multiply(A, B, num_threads):
+# ===============================
+# Multithreading
+# ===============================
+def thread_worker(start, end, results, index):
+    results[index] = heavy_task(start, end)
+
+
+def threaded_execution(n, num_threads):
     threads = []
-    result = np.zeros((A.shape[0], B.shape[1]))
+    results = [0] * num_threads
 
-    step = A.shape[0] // num_threads
+    step = n // num_threads
 
     for i in range(num_threads):
         start = i * step
-        end = (i + 1) * step if i != num_threads - 1 else A.shape[0]
+        end = (i + 1) * step if i != num_threads - 1 else n
 
-        t = threading.Thread(target=thread_worker, args=(A, B, result, start, end))
+        t = threading.Thread(
+            target=thread_worker,
+            args=(start, end, results, i)
+        )
         threads.append(t)
         t.start()
 
     for t in threads:
         t.join()
 
-    return result
+    return sum(results)
 
 
-# -------------------------------
-# 3. Multiprocessing Implementation
-# -------------------------------
-def process_worker(args):
-    A_part, B = args
-    return np.dot(A_part, B)
+# ===============================
+# Multiprocessing
+# ===============================
+def heavy_task_mp(args):
+    start, end = args
+    return heavy_task(start, end)
 
 
-def multiprocessing_multiply(A, B, num_processes):
-    pool = multiprocessing.Pool(processes=num_processes)
+def multiprocessing_execution(n, num_processes):
+    with multiprocessing.Pool(processes=num_processes) as pool:
 
-    step = A.shape[0] // num_processes
-    chunks = []
+        step = n // num_processes
+        ranges = []
 
-    for i in range(num_processes):
-        start = i * step
-        end = (i + 1) * step if i != num_processes - 1 else A.shape[0]
-        chunks.append((A[start:end], B))
+        for i in range(num_processes):
+            start = i * step
+            end = (i + 1) * step if i != num_processes - 1 else n
+            ranges.append((start, end))
 
-    results = pool.map(process_worker, chunks)
-    pool.close()
-    pool.join()
+        results = pool.map(heavy_task_mp, ranges)
 
-    return np.vstack(results)
+    return sum(results)
 
 
-# -------------------------------
-# 4. Performance Measurement
-# -------------------------------
+# ===============================
+# Timing Function
+# ===============================
 def measure_time(func, *args):
-    start = time.time()
-    func(*args)
-    end = time.time()
-    return end - start
+    start = time.perf_counter()
+    result = func(*args)
+    end = time.perf_counter()
+    return end - start, result
 
 
-# -------------------------------
-# 5. Main Execution
-# -------------------------------
+# ===============================
+# Main Execution
+# ===============================
 if __name__ == "__main__":
-    print("Running Matrix Multiplication Tests...\n")
+
+    print("=" * 60)
+    print("PARALLEL COMPUTING DEMONSTRATION")
+    print("=" * 60)
 
     # Sequential
-    seq_time = measure_time(sequential_multiply, A, B)
-    print(f"Sequential Time: {seq_time:.4f} seconds")
+    seq_time, seq_result = measure_time(sequential_execution, N)
+    print(f"\nSequential Time: {seq_time:.4f} seconds")
 
     results = []
 
+    # ===============================
     # Threading Tests
+    # ===============================
+    print("\n--- THREADING RESULTS ---")
     for threads in [2, 4, 8]:
-        t_time = measure_time(threaded_multiply, A, B, threads)
+
+        t_time, t_result = measure_time(threaded_execution, N, threads)
+
         speedup = seq_time / t_time
         efficiency = speedup / threads
 
         results.append(("Threading", threads, t_time, speedup, efficiency))
-        print(f"Threading ({threads} threads): {t_time:.4f}s | Speedup: {speedup:.2f} | Efficiency: {efficiency:.2f}")
 
+        print(f"Threads={threads} | Time={t_time:.4f}s | "
+              f"Speedup={speedup:.2f} | Efficiency={efficiency:.2%}")
+
+
+    # ===============================
     # Multiprocessing Tests
+    # ===============================
+    print("\n--- MULTIPROCESSING RESULTS ---")
     for processes in [2, 4, 8]:
-        p_time = measure_time(multiprocessing_multiply, A, B, processes)
+
+        p_time, p_result = measure_time(multiprocessing_execution, N, processes)
+
         speedup = seq_time / p_time
         efficiency = speedup / processes
 
         results.append(("Multiprocessing", processes, p_time, speedup, efficiency))
-        print(f"Multiprocessing ({processes} processes): {p_time:.4f}s | Speedup: {speedup:.2f} | Efficiency: {efficiency:.2f}")
 
-    print("\n--- Summary Table ---")
-    print("Method | Workers | Time | Speedup | Efficiency")
+        print(f"Processes={processes} | Time={p_time:.4f}s | "
+              f"Speedup={speedup:.2f} | Efficiency={efficiency:.2%}")
+
+
+    # ===============================
+    # Summary Table
+    # ===============================
+    print("\n" + "=" * 60)
+    print("SUMMARY TABLE")
+    print("=" * 60)
+
+    print(f"{'Method':<15}{'Workers':<10}{'Time(s)':<12}{'Speedup':<12}{'Efficiency'}")
+    print("-" * 60)
 
     for r in results:
-        print(f"{r[0]} | {r[1]} | {r[2]:.4f} | {r[3]:.2f} | {r[4]:.2f}")
-        
+        print(f"{r[0]:<15}{r[1]:<10}{r[2]:<12.4f}{r[3]:<12.2f}{r[4]:.2%}")
