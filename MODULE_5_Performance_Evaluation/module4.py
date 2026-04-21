@@ -257,7 +257,7 @@ def amdahl(p, n):
     return 1 / ((1 - p) + (p / n))
 
 
-def amdahl_curve(p=0.9):
+def amdahl_curve(p=0.1):
     return [amdahl(p, n) for n in PROCESS_COUNTS]
 
 
@@ -314,6 +314,10 @@ def plot_all(results):
     plt.figure()
     for name in results:
         plt.plot(PROCESS_COUNTS, results[name]["exec"], marker='o', label=name)
+        
+    # Add sequential reference line (NEW)
+    sequential_time = results["Baseline"]["exec"][0]
+    plt.axhline(y=sequential_time, linestyle='--', label="Sequential")
 
     plt.title("Execution Time vs Processes")
     plt.xlabel("Processes")
@@ -327,7 +331,7 @@ def plot_all(results):
     for name in results:
         plt.plot(PROCESS_COUNTS, results[name]["speedup"], marker='o', label=name)
 
-    plt.plot(PROCESS_COUNTS, amdahl_curve(), linestyle='--', label="Amdahl")
+    plt.plot(PROCESS_COUNTS, amdahl_curve(), linestyle='--', label="Amdahl (p=0.1)")
 
     plt.title("Speedup vs Processes")
     plt.xlabel("Processes")
@@ -394,6 +398,3 @@ if __name__ == "__main__":
     module5_results = run_module5()
 
     plot_all(module5_results)
-    
-
-
