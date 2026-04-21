@@ -359,6 +359,18 @@ def plot_metric(title: str, x, y_static, y_dynamic, ylabel: str):
     plt.legend()
     plt.grid(True)
     plt.show()
+    
+def plot_metric_3(title: str, x, y_seq, y_static, y_dynamic, ylabel: str):
+    plt.figure()
+    plt.plot(x, y_seq, marker="o", label="Sequential")
+    plt.plot(x, y_static, marker="o", label="Static")
+    plt.plot(x, y_dynamic, marker="o", label="Dynamic")
+    plt.xlabel("Number of Processes")
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 
 def plot_speedup(title: str, cores_list, speedup_static, speedup_dynamic, p_assumed: float):
@@ -444,9 +456,10 @@ def run_module5():
         title_prefix = mode.capitalize()
 
         # 5 graphs per mode (10 total): Static vs Dynamic on all graphs
-        plot_metric(
+        plot_metric_3(
             f"{title_prefix} Workload - Execution Time vs Processes",
             cores_list,
+            [seq_time for _ in cores_list],
             times_static,
             times_dynamic,
             "Execution Time (s)",
