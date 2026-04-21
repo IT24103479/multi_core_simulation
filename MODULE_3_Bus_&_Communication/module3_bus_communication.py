@@ -306,7 +306,8 @@ def print_results_table(contended_results: list,
 # ===============================================================
 
 def plot_results(contended_results: list,
-                 controlled_results: list) -> None:
+                 controlled_results: list):
+    """Create and return a figure showing bus communication analysis."""
 
     n_vals       = [r["num_processors"] for r in contended_results]
     c_times      = [r["wall_time"]      for r in contended_results]
@@ -438,10 +439,7 @@ def plot_results(contended_results: list,
     ax4.grid(True, linestyle="--", alpha=0.5)
     ax4.set_xticks(n_vals)
 
-    plt.savefig("module3_bus_communication.png",
-                dpi=150, bbox_inches="tight")
-    print("\n[Module 3] Graph saved -> module3_bus_communication.png")
-    plt.show()
+    return fig
 
 
 # ===============================================================
@@ -494,7 +492,12 @@ def module3_main() -> None:
     contended_results, controlled_results = collect_results()
     print_results_table(contended_results, controlled_results)
     print_analysis(contended_results, controlled_results)
-    plot_results(contended_results, controlled_results)
+    fig = plot_results(contended_results, controlled_results)
+    
+    plt.savefig("module3_bus_communication.png",
+                dpi=150, bbox_inches="tight")
+    print("\n[Module 3] Graph saved -> module3_bus_communication.png")
+    plt.show()
 
 
 if __name__ == "__main__":

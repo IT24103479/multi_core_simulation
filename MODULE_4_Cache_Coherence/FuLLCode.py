@@ -131,38 +131,38 @@ def analyze(results):
 # GRAPH 1: EXECUTION TIME
 # =========================
 def plot_execution_times(results):
+    """Create and return a figure showing execution time comparison."""
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(results.keys(), results.values(), color='steelblue', edgecolor='black')
 
-    plt.figure()
-    plt.bar(results.keys(), results.values())
+    ax.set_title("Execution Time Comparison", fontsize=14, fontweight='bold')
+    ax.set_xlabel("Scenario", fontsize=12)
+    ax.set_ylabel("Time (seconds)", fontsize=12)
+    ax.tick_params(axis='x', rotation=20)
 
-    plt.title("Execution Time Comparison")
-    plt.xlabel("Scenario")
-    plt.ylabel("Time (seconds)")
-    plt.xticks(rotation=20)
-
-    plt.tight_layout()
-    plt.show()
+    fig.tight_layout()
+    return fig
 
 
 # =========================
 # GRAPH 2: SPEEDUP
 # =========================
 def plot_speedup(results):
-
+    """Create and return a figure showing speedup comparison."""
     baseline = results["Baseline"]
 
     speedup = {k: baseline / v for k, v in results.items()}
 
-    plt.figure()
-    plt.bar(speedup.keys(), speedup.values())
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.bar(speedup.keys(), speedup.values(), color='coral', edgecolor='black')
 
-    plt.title("Speedup vs Baseline")
-    plt.xlabel("Scenario")
-    plt.ylabel("Speedup (Higher is Better)")
-    plt.xticks(rotation=20)
+    ax.set_title("Speedup vs Baseline", fontsize=14, fontweight='bold')
+    ax.set_xlabel("Scenario", fontsize=12)
+    ax.set_ylabel("Speedup (Higher is Better)", fontsize=12)
+    ax.tick_params(axis='x', rotation=20)
 
-    plt.tight_layout()
-    plt.show()
+    fig.tight_layout()
+    return fig
 
 
 # =========================
@@ -174,5 +174,7 @@ if __name__ == "__main__":
 
     analyze(results)
 
-    plot_execution_times(results)
-    plot_speedup(results)
+    fig1 = plot_execution_times(results)
+    fig2 = plot_speedup(results)
+    
+    plt.show()
