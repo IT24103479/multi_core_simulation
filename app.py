@@ -188,7 +188,7 @@ def render_module2() -> None:
 		"Run the processor scheduling workload and inspect returned metrics in tabular form."
 	)
 
-	if st.button("Run Module 2 Experiments") or "module2_results" not in st.session_state:
+	if st.button("Run Module 2 Experiments"):
 		try:
 			with st.spinner("Running Module 2 experiments..."):
 				module2_df, module2_stdout = run_module2_experiments()
@@ -203,6 +203,10 @@ def render_module2() -> None:
 	module2_error = st.session_state.get("module2_error")
 	module2_df = st.session_state.get("module2_results")
 	module2_stdout = st.session_state.get("module2_stdout", "")
+
+	if module2_df is None and not module2_error:
+		st.info("Click **Run Module 2 Experiments** to execute this module.")
+		return
 
 	if module2_error:
 		st.error(f"Module 2 could not be executed: {module2_error}")
@@ -260,7 +264,7 @@ def render_module5() -> None:
 		"Run aggregate performance-evaluation experiments and review summarized metrics."
 	)
 
-	if st.button("Run Module 5 Experiments") or "module5_results" not in st.session_state:
+	if st.button("Run Module 5 Experiments"):
 		try:
 			with st.spinner("Running Module 5 experiments..."):
 				module5_df, module5_stdout = run_module5_experiments()
@@ -275,6 +279,10 @@ def render_module5() -> None:
 	module5_error = st.session_state.get("module5_error")
 	module5_df = st.session_state.get("module5_results")
 	module5_stdout = st.session_state.get("module5_stdout", "")
+
+	if module5_df is None and not module5_error:
+		st.info("Click **Run Module 5 Experiments** to execute this module.")
+		return
 
 	if module5_error:
 		st.error(f"Module 5 could not be executed: {module5_error}")
@@ -299,13 +307,12 @@ def render_run_all() -> None:
 	st.markdown(
 		"Launch all configured studies from a single research panel and compare findings across modules."
 	)
+	if "run_all_errors" not in st.session_state:
+		st.session_state["run_all_errors"] = {}
 
-	if st.button("Run Full Benchmark Suite") or "run_all_m1" not in st.session_state:
+	if st.button("Run Full Benchmark Suite"):
 		run_all_errors = {}
 		with st.spinner("Running all experiments... this may take a few minutes."):
-			m1_df, _ = run_module1_experiments()
-			_, _, m3_summary = run_module3_experiments()
-			m4_df = run_module4_experiments()
 			try:
 				m2_df, _ = run_module2_experiments()
 			except Exception as exc:
@@ -316,6 +323,21 @@ def render_run_all() -> None:
 			except Exception as exc:
 				m5_df = None
 				run_all_errors["Module 5"] = str(exc)
+			try:
+				m1_df, _ = run_module1_experiments()
+			except Exception as exc:
+				m1_df = None
+				run_all_errors["Module 1"] = str(exc)
+			try:
+				_, _, m3_summary = run_module3_experiments()
+			except Exception as exc:
+				m3_summary = None
+				run_all_errors["Module 3"] = str(exc)
+			try:
+				m4_df = run_module4_experiments()
+			except Exception as exc:
+				m4_df = None
+				run_all_errors["Module 4"] = str(exc)
 		st.session_state["run_all_m1"] = m1_df
 		st.session_state["run_all_m2"] = m2_df
 		st.session_state["run_all_m3"] = m3_summary
@@ -329,6 +351,17 @@ def render_run_all() -> None:
 	m4_df = st.session_state.get("run_all_m4")
 	m5_df = st.session_state.get("run_all_m5")
 	run_all_errors = st.session_state.get("run_all_errors", {})
+	run_all_results = {
+		"Module 1": m1_df,
+		"Module 2": m2_df,
+		"Module 3": m3_summary,
+		"Module 4": m4_df,
+		"Module 5": m5_df,
+	}
+
+	if all(value is None for value in run_all_results.values()) and not run_all_errors:
+		st.info("Click **Run Full Benchmark Suite** to execute all integrated modules.")
+		return
 
 	if m1_df is not None:
 		st.subheader("Module 1 Summary")

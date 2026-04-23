@@ -32,12 +32,24 @@ from MODULE_4_Cache_Coherence.FuLLCode import run_tests
 
 def _discover_python_script(module_dir: Path) -> Path:
     scripts = sorted(
-        path for path in module_dir.glob("*.py") if path.is_file() and path.name != "__init__.py"
+        path
+        for path in module_dir.glob("*.py")
+        if (
+            path.is_file()
+            and path.name != "__init__.py"
+            and not path.name.startswith(("test_", "_"))
+        )
     )
     if not scripts:
         raise FileNotFoundError(
             f"No Python experiment script found in '{module_dir.name}'. "
             "Add a .py file with an experiment runner function."
+        )
+    if len(scripts) > 1:
+        script_names = ", ".join(path.name for path in scripts)
+        raise RuntimeError(
+            f"Multiple experiment scripts found in '{module_dir.name}': {script_names}. "
+            "Keep a single runner script in this directory for dashboard integration."
         )
     return scripts[0]
 
@@ -52,6 +64,12 @@ def _load_module_from_file(module_name: str, script_path: Path) -> Any:
 
 
 def _results_to_dataframe(results: Any) -> pd.DataFrame:
+    def _is_scalar_like(value: Any) -> bool:
+        return (
+            isinstance(value, (str, bytes, bytearray))
+            or not isinstance(value, (Mapping, Sequence, np.ndarray))
+        )
+
     if isinstance(results, pd.DataFrame):
         return results.copy()
 
@@ -67,7 +85,7 @@ def _results_to_dataframe(results: Any) -> pd.DataFrame:
     if isinstance(results, Mapping):
         if not results:
             return pd.DataFrame()
-        scalar_values = all(not isinstance(value, (Mapping, Sequence, np.ndarray)) for value in results.values())
+        scalar_values = all(_is_scalar_like(value) for value in results.values())
         if scalar_values:
             return pd.DataFrame([dict(results)])
         try:
@@ -92,16 +110,26 @@ def _results_to_dataframe(results: Any) -> pd.DataFrame:
 
 
 def _run_generic_module_experiments(module_dir: Path, module_name: str) -> Tuple[pd.DataFrame, str]:
+    """Execute a module runner script, capture stdout, and normalize outputs to a DataFrame."""
+
     script_path = _discover_python_script(module_dir)
     module = _load_module_from_file(f"{module_name.replace(' ', '_').lower()}_runner", script_path)
-    candidate_functions = (
+    candidate_functions = [
         "run_experiments",
         "run_tests",
         "collect_results",
         "run_simulation",
         "evaluate_performance",
-        "module2_main",
-        "module5_main",
+        "main",
+    ]
+    candidate_functions.extend(
+        name
+        for name in dir(module)
+        if (
+            name.endswith("_main")
+            and callable(getattr(module, name))
+            and name not in candidate_functions
+        )
     )
 
     output = io.StringIO()
