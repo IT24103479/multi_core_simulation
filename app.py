@@ -44,7 +44,8 @@ def render_sidebar() -> str:
 	st.sidebar.markdown(
 		"- Use `Run` actions to update the charts.\n"
 		"- The system uses a mix of sequential and parallel workloads.\n"
-		"- Results are captured in session state for the current page."
+		"- Results are captured in session state for the current page.\n"
+		"- Module 2 (Processor Scheduling) is not integrated in this dashboard yet."
 	)
 
 	return selection
@@ -213,7 +214,8 @@ def render_module4() -> None:
 def render_run_all() -> None:
 	st.header("Run All Experiments")
 	st.markdown(
-		"Launch all configured studies from a single research panel and compare findings across modules."
+		"Launch all configured studies (Modules 1, 3, and 4) from a single research panel "
+		"and compare findings across modules."
 	)
 
 	if st.button("Run Full Benchmark Suite") or "run_all_summary" not in st.session_state:
