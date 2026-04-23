@@ -25,6 +25,7 @@ spec = importlib.util.spec_from_file_location("module3_bus_communication",
 module3 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module3)
 collect_results = module3.collect_results
+plot_results = module3.plot_results
 
 from MODULE_4_Cache_Coherence.FuLLCode import run_tests
 
@@ -72,12 +73,14 @@ def run_module1_experiments(
     return df, seq_time
 
 
-def run_module3_experiments() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Run the bus simulation experiments and return DataFrames for analysis."""
+def run_module3_experiments():
+    """Run the bus simulation experiments and return DataFrames + Matplotlib figure."""
 
     buffer = io.StringIO()
     with contextlib.redirect_stdout(buffer):
         contended_results, controlled_results = collect_results()
+
+    fig = plot_results(contended_results, controlled_results)
 
     # Build contended and controlled DataFrames with Scenario column
     contended_df = pd.DataFrame(contended_results)
@@ -135,7 +138,7 @@ def run_module3_experiments() -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]
 
     summary_df = pd.DataFrame(summary_records)
     
-    return contended_df, controlled_df, summary_df
+    return contended_df, controlled_df, summary_df, fig
 
 
 def run_module4_experiments() -> pd.DataFrame:

@@ -306,8 +306,7 @@ def print_results_table(contended_results: list,
 # ===============================================================
 
 def plot_results(contended_results: list,
-                 controlled_results: list):
-    """Create and return a figure showing bus communication analysis."""
+                 controlled_results: list) -> None:
 
     n_vals       = [r["num_processors"] for r in contended_results]
     c_times      = [r["wall_time"]      for r in contended_results]
@@ -359,7 +358,7 @@ def plot_results(contended_results: list,
 
     ax1.set_xlabel("Number of Processors", fontsize=11)
     ax1.set_ylabel("Total Wall-Clock Time (seconds)", fontsize=11)
-    ax1.set_title("(a) Bus Transfer Time vs Processor Count",
+    ax1.set_title("Graph 1: Wall Time Trend",
                   fontsize=11, fontweight="bold")
     ax1.legend(fontsize=9)
     ax1.grid(True, linestyle="--", alpha=0.5)
@@ -409,7 +408,7 @@ def plot_results(contended_results: list,
 
     ax3.set_xlabel("Number of Processors", fontsize=11)
     ax3.set_ylabel("Throughput (transfers / second)", fontsize=11)
-    ax3.set_title("(c) Bus Throughput Comparison",
+    ax3.set_title("Graph 2: Throughput Comparison",
                   fontsize=11, fontweight="bold")
     ax3.set_xticks(x)
     ax3.set_xticklabels([str(n) for n in n_vals])
@@ -439,7 +438,10 @@ def plot_results(contended_results: list,
     ax4.grid(True, linestyle="--", alpha=0.5)
     ax4.set_xticks(n_vals)
 
-    return fig
+    plt.savefig("module3_bus_communication.png",
+                dpi=150, bbox_inches="tight")
+    print("\n[Module 3] Graph saved -> module3_bus_communication.png")
+    plt.show()
 
 
 # ===============================================================
@@ -492,14 +494,8 @@ def module3_main() -> None:
     contended_results, controlled_results = collect_results()
     print_results_table(contended_results, controlled_results)
     print_analysis(contended_results, controlled_results)
-    fig = plot_results(contended_results, controlled_results)
-    
-    plt.savefig("module3_bus_communication.png",
-                dpi=150, bbox_inches="tight")
-    print("\n[Module 3] Graph saved -> module3_bus_communication.png")
-    plt.show()
+    plot_results(contended_results, controlled_results)
 
 
 if __name__ == "__main__":
     module3_main()
-    

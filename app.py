@@ -129,20 +129,26 @@ def render_module3() -> None:
 
 	if st.button("Run Module 3 Experiments") or "module3_summary" not in st.session_state:
 		with st.spinner("Executing bus communication experiments..."):
-			contended_df, controlled_df, summary_df = run_module3_experiments()
+			contended_df, controlled_df, summary_df, fig = run_module3_experiments()
 		st.session_state["module3_contended"] = contended_df
 		st.session_state["module3_controlled"] = controlled_df
 		st.session_state["module3_summary"] = summary_df
+		st.session_state["module3_figure"] = fig
 
 	contended_df = st.session_state["module3_contended"]
 	controlled_df = st.session_state["module3_controlled"]
 	summary_df = st.session_state["module3_summary"]
+	fig = st.session_state.get("module3_figure")
 
 	st.subheader("Summary Metrics")
 	total_processors = int(summary_df["Processors"].max())
 	top_speedup = summary_df["Speedup"].max()
 	st.metric("Maximum processors tested", total_processors)
 	st.metric("Maximum observed speedup", f"{top_speedup:.2f}x")
+
+	st.subheader("Module 3 Figure (4 graphs)")
+	if fig is not None:
+		st.pyplot(fig, use_container_width=True)
 
 	st.subheader("Wall Time Comparison")
 	st.dataframe(
@@ -152,10 +158,14 @@ def render_module3() -> None:
 	)
 
 	st.subheader("Visual Analysis")
+	
+	st.markdown("#### Graph 1: Wall Time Trend")
 	chart_data = summary_df.pivot(index="Processors", columns="Scenario", values="Wall Time (s)")
 	st.line_chart(chart_data)
-	chart_speedup = summary_df.pivot(index="Processors", columns="Scenario", values="Speedup")
-	st.bar_chart(chart_speedup)
+	
+	st.markdown("#### Graph 2: Throughput Comparison")
+	chart_throughput = summary_df.pivot(index="Processors", columns="Scenario", values="Throughput")
+	st.bar_chart(chart_throughput)
 
 	with st.expander("Detailed results", expanded=False):
 		st.write("Contended bus results")
@@ -219,7 +229,7 @@ def render_run_all() -> None:
 	if st.button("Run Full Benchmark Suite") or "run_all_summary" not in st.session_state:
 		with st.spinner("Running all experiments... this may take a few minutes."):
 			m1_df, _ = run_module1_experiments()
-			_, _, m3_summary = run_module3_experiments()
+			_, _, m3_summary, _ = run_module3_experiments()
 			m4_df = run_module4_experiments()
 		st.session_state["run_all_m1"] = m1_df
 		st.session_state["run_all_m3"] = m3_summary
