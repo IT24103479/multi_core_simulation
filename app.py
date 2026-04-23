@@ -219,7 +219,8 @@ def render_module2() -> None:
 		st.dataframe(module2_df)
 		numeric_columns = module2_df.select_dtypes(include=["number"]).columns
 		if len(numeric_columns) > 0:
-			st.bar_chart(module2_df[numeric_columns])
+			st.subheader("Performance Charts")
+			st.line_chart(module2_df[numeric_columns])
 
 	if module2_stdout:
 		with st.expander("Module 2 Console Output", expanded=False):
