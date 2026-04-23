@@ -1,8 +1,10 @@
 import contextlib
+import importlib.util
 import io
 import sys
+from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,7 +21,6 @@ from MODULE_1_Parallelism.module1_parallelism import (
 )
 
 # Import Module 3 with special handling for the folder name
-import importlib.util
 spec = importlib.util.spec_from_file_location("module3_bus_communication", 
                                                module3_path / "module3_bus_communication.py")
 module3 = importlib.util.module_from_spec(spec)
@@ -27,6 +28,103 @@ spec.loader.exec_module(module3)
 collect_results = module3.collect_results
 
 from MODULE_4_Cache_Coherence.FuLLCode import run_tests
+
+
+def _discover_python_script(module_dir: Path) -> Path:
+    scripts = sorted(
+        path for path in module_dir.glob("*.py") if path.is_file() and path.name != "__init__.py"
+    )
+    if not scripts:
+        raise FileNotFoundError(
+            f"No Python experiment script found in '{module_dir.name}'. "
+            "Add a .py file with an experiment runner function."
+        )
+    return scripts[0]
+
+
+def _load_module_from_file(module_name: str, script_path: Path) -> Any:
+    spec = importlib.util.spec_from_file_location(module_name, script_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Unable to load module from '{script_path}'.")
+    loaded_module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(loaded_module)
+    return loaded_module
+
+
+def _results_to_dataframe(results: Any) -> pd.DataFrame:
+    if isinstance(results, pd.DataFrame):
+        return results.copy()
+
+    if isinstance(results, tuple):
+        parts = []
+        for index, value in enumerate(results, start=1):
+            part_df = _results_to_dataframe(value)
+            if not part_df.empty:
+                part_df.insert(0, "Result Set", index)
+                parts.append(part_df)
+        return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+
+    if isinstance(results, Mapping):
+        if not results:
+            return pd.DataFrame()
+        scalar_values = all(not isinstance(value, (Mapping, Sequence, np.ndarray)) for value in results.values())
+        if scalar_values:
+            return pd.DataFrame([dict(results)])
+        try:
+            return pd.DataFrame(results)
+        except ValueError:
+            return (
+                pd.DataFrame.from_dict(dict(results), orient="index", columns=["Value"])
+                .reset_index()
+                .rename(columns={"index": "Metric"})
+            )
+
+    if isinstance(results, np.ndarray):
+        return pd.DataFrame(results)
+
+    if isinstance(results, Sequence) and not isinstance(results, (str, bytes, bytearray)):
+        return pd.DataFrame(list(results))
+
+    if results is None:
+        return pd.DataFrame()
+
+    return pd.DataFrame({"Value": [results]})
+
+
+def _run_generic_module_experiments(module_dir: Path, module_name: str) -> Tuple[pd.DataFrame, str]:
+    script_path = _discover_python_script(module_dir)
+    module = _load_module_from_file(f"{module_name.replace(' ', '_').lower()}_runner", script_path)
+    candidate_functions = (
+        "run_experiments",
+        "run_tests",
+        "collect_results",
+        "run_simulation",
+        "evaluate_performance",
+        "module2_main",
+        "module5_main",
+    )
+
+    output = io.StringIO()
+    with contextlib.redirect_stdout(output):
+        results = None
+        for func_name in candidate_functions:
+            candidate = getattr(module, func_name, None)
+            if callable(candidate):
+                results = candidate()
+                break
+
+    if results is None:
+        raise RuntimeError(
+            f"No supported runner function found in '{script_path.name}'. "
+            f"Expected one of: {', '.join(candidate_functions)}."
+        )
+
+    dataframe = _results_to_dataframe(results)
+    captured_stdout = output.getvalue().strip()
+    if dataframe.empty and captured_stdout:
+        dataframe = pd.DataFrame({"Output": captured_stdout.splitlines()})
+
+    return dataframe, captured_stdout
 
 
 def run_module1_experiments(
@@ -148,3 +246,17 @@ def run_module4_experiments() -> pd.DataFrame:
     df["Relative"] = df["Time (s)"] / baseline_time
     df = df.reset_index().rename(columns={"index": "Scenario"})
     return df
+
+
+def run_module2_experiments() -> Tuple[pd.DataFrame, str]:
+    """Run Module 2 processor-scheduling experiments and return a display DataFrame."""
+
+    module_dir = Path(__file__).parent / "MODULE_2_Processor_Scheduling"
+    return _run_generic_module_experiments(module_dir, "Module 2")
+
+
+def run_module5_experiments() -> Tuple[pd.DataFrame, str]:
+    """Run Module 5 performance-evaluation experiments and return a display DataFrame."""
+
+    module_dir = Path(__file__).parent / "MODULE_5_Performance_Evaluation"
+    return _run_generic_module_experiments(module_dir, "Module 5")

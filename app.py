@@ -2,8 +2,10 @@ import streamlit as st
 
 from dashboard_utils import (
 	run_module1_experiments,
+	run_module2_experiments,
 	run_module3_experiments,
 	run_module4_experiments,
+	run_module5_experiments,
 )
 
 
@@ -33,8 +35,10 @@ def render_sidebar() -> str:
 		[
 			"Overview",
 			"Module 1: Parallelism",
+			"Module 2: Processor Scheduling",
 			"Module 3: Bus & Communication",
 			"Module 4: Cache Coherence",
+			"Module 5: Performance Evaluation",
 			"Run All Experiments",
 		],
 	)
@@ -178,6 +182,46 @@ def render_module3() -> None:
 		}))
 
 
+def render_module2() -> None:
+	st.header("Module 2: Processor Scheduling")
+	st.markdown(
+		"Run the processor scheduling workload and inspect returned metrics in tabular form."
+	)
+
+	if st.button("Run Module 2 Experiments") or "module2_results" not in st.session_state:
+		try:
+			with st.spinner("Running Module 2 experiments..."):
+				module2_df, module2_stdout = run_module2_experiments()
+			st.session_state["module2_results"] = module2_df
+			st.session_state["module2_stdout"] = module2_stdout
+			st.session_state.pop("module2_error", None)
+		except Exception as exc:
+			st.session_state["module2_error"] = str(exc)
+			st.session_state["module2_results"] = None
+			st.session_state["module2_stdout"] = ""
+
+	module2_error = st.session_state.get("module2_error")
+	module2_df = st.session_state.get("module2_results")
+	module2_stdout = st.session_state.get("module2_stdout", "")
+
+	if module2_error:
+		st.error(f"Module 2 could not be executed: {module2_error}")
+		return
+
+	if module2_df is None or module2_df.empty:
+		st.info("Module 2 ran, but no structured results were returned.")
+	else:
+		st.subheader("Module 2 Results")
+		st.dataframe(module2_df)
+		numeric_columns = module2_df.select_dtypes(include=["number"]).columns
+		if len(numeric_columns) > 0:
+			st.bar_chart(module2_df[numeric_columns])
+
+	if module2_stdout:
+		with st.expander("Module 2 Console Output", expanded=False):
+			st.code(module2_stdout)
+
+
 def render_module4() -> None:
 	st.header("Module 4: Cache Coherence")
 	st.markdown(
@@ -210,41 +254,108 @@ def render_module4() -> None:
 	)
 
 
+def render_module5() -> None:
+	st.header("Module 5: Performance Evaluation")
+	st.markdown(
+		"Run aggregate performance-evaluation experiments and review summarized metrics."
+	)
+
+	if st.button("Run Module 5 Experiments") or "module5_results" not in st.session_state:
+		try:
+			with st.spinner("Running Module 5 experiments..."):
+				module5_df, module5_stdout = run_module5_experiments()
+			st.session_state["module5_results"] = module5_df
+			st.session_state["module5_stdout"] = module5_stdout
+			st.session_state.pop("module5_error", None)
+		except Exception as exc:
+			st.session_state["module5_error"] = str(exc)
+			st.session_state["module5_results"] = None
+			st.session_state["module5_stdout"] = ""
+
+	module5_error = st.session_state.get("module5_error")
+	module5_df = st.session_state.get("module5_results")
+	module5_stdout = st.session_state.get("module5_stdout", "")
+
+	if module5_error:
+		st.error(f"Module 5 could not be executed: {module5_error}")
+		return
+
+	if module5_df is None or module5_df.empty:
+		st.info("Module 5 ran, but no structured results were returned.")
+	else:
+		st.subheader("Module 5 Results")
+		st.dataframe(module5_df)
+		numeric_columns = module5_df.select_dtypes(include=["number"]).columns
+		if len(numeric_columns) > 0:
+			st.line_chart(module5_df[numeric_columns])
+
+	if module5_stdout:
+		with st.expander("Module 5 Console Output", expanded=False):
+			st.code(module5_stdout)
+
+
 def render_run_all() -> None:
 	st.header("Run All Experiments")
 	st.markdown(
 		"Launch all configured studies from a single research panel and compare findings across modules."
 	)
 
-	if st.button("Run Full Benchmark Suite") or "run_all_summary" not in st.session_state:
+	if st.button("Run Full Benchmark Suite") or "run_all_m1" not in st.session_state:
+		run_all_errors = {}
 		with st.spinner("Running all experiments... this may take a few minutes."):
 			m1_df, _ = run_module1_experiments()
 			_, _, m3_summary = run_module3_experiments()
 			m4_df = run_module4_experiments()
+			try:
+				m2_df, _ = run_module2_experiments()
+			except Exception as exc:
+				m2_df = None
+				run_all_errors["Module 2"] = str(exc)
+			try:
+				m5_df, _ = run_module5_experiments()
+			except Exception as exc:
+				m5_df = None
+				run_all_errors["Module 5"] = str(exc)
 		st.session_state["run_all_m1"] = m1_df
+		st.session_state["run_all_m2"] = m2_df
 		st.session_state["run_all_m3"] = m3_summary
 		st.session_state["run_all_m4"] = m4_df
+		st.session_state["run_all_m5"] = m5_df
+		st.session_state["run_all_errors"] = run_all_errors
 
 	m1_df = st.session_state.get("run_all_m1")
+	m2_df = st.session_state.get("run_all_m2")
 	m3_summary = st.session_state.get("run_all_m3")
 	m4_df = st.session_state.get("run_all_m4")
+	m5_df = st.session_state.get("run_all_m5")
+	run_all_errors = st.session_state.get("run_all_errors", {})
 
 	if m1_df is not None:
 		st.subheader("Module 1 Summary")
 		st.dataframe(m1_df)
+	if m2_df is not None:
+		st.subheader("Module 2 Summary")
+		st.dataframe(m2_df)
 	if m3_summary is not None:
 		st.subheader("Module 3 Summary")
 		st.dataframe(m3_summary)
 	if m4_df is not None:
 		st.subheader("Module 4 Summary")
 		st.dataframe(m4_df)
+	if m5_df is not None:
+		st.subheader("Module 5 Summary")
+		st.dataframe(m5_df)
+	if run_all_errors:
+		for module_name, error in run_all_errors.items():
+			st.error(f"{module_name} failed during full benchmark run: {error}")
 
 
 def render_overview() -> None:
 	st.header("Overview")
 	st.markdown(
 		"This dashboard is designed to support exploratory research on multi-core performance. "
-		"Each module highlights a different subsystem: computational parallelism, bus contention, and cache coherence."
+		"Each module highlights a different subsystem: computational parallelism, processor scheduling, "
+		"bus contention, cache coherence, and aggregate performance evaluation."
 	)
 	st.markdown(
 		"### Key capabilities"
@@ -256,12 +367,18 @@ def render_overview() -> None:
 	if "module1_results" in st.session_state:
 		st.markdown("#### Latest Module 1 snapshot")
 		st.dataframe(st.session_state["module1_results"].head())
+	if "module2_results" in st.session_state and st.session_state["module2_results"] is not None:
+		st.markdown("#### Latest Module 2 snapshot")
+		st.dataframe(st.session_state["module2_results"].head())
 	if "module3_summary" in st.session_state:
 		st.markdown("#### Latest Module 3 snapshot")
 		st.dataframe(st.session_state["module3_summary"].head())
 	if "module4_results" in st.session_state:
 		st.markdown("#### Latest Module 4 snapshot")
 		st.dataframe(st.session_state["module4_results"].head())
+	if "module5_results" in st.session_state and st.session_state["module5_results"] is not None:
+		st.markdown("#### Latest Module 5 snapshot")
+		st.dataframe(st.session_state["module5_results"].head())
 
 
 def main() -> None:
@@ -272,10 +389,14 @@ def main() -> None:
 		render_overview()
 	elif section == "Module 1: Parallelism":
 		render_module1()
+	elif section == "Module 2: Processor Scheduling":
+		render_module2()
 	elif section == "Module 3: Bus & Communication":
 		render_module3()
 	elif section == "Module 4: Cache Coherence":
 		render_module4()
+	elif section == "Module 5: Performance Evaluation":
+		render_module5()
 	elif section == "Run All Experiments":
 		render_run_all()
 

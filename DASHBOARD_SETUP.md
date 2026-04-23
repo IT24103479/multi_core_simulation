@@ -1,10 +1,12 @@
 # Multi-Core Performance Dashboard - Setup & Usage Guide
 
 ## Overview
-This Streamlit-based dashboard provides an interactive, research-quality interface for analyzing multi-core computing performance across three major subsystems:
+This Streamlit-based dashboard provides an interactive, research-quality interface for analyzing multi-core computing performance across five major subsystems:
 - **Module 1**: Parallelism (threading & multiprocessing)
+- **Module 2**: Processor Scheduling
 - **Module 3**: Bus & Communication (contention & arbitration)
 - **Module 4**: Cache Coherence (false sharing, padding, true sharing)
+- **Module 5**: Performance Evaluation
 
 ---
 
@@ -44,8 +46,10 @@ This opens the dashboard in your default web browser at `http://localhost:8501`.
 ### Navigation (Sidebar)
 - **Overview**: Quick snapshot of latest results
 - **Module 1: Parallelism**: Threading vs multiprocessing analysis
+- **Module 2: Processor Scheduling**: Scheduling experiment runner output
 - **Module 3: Bus & Communication**: Contended vs controlled bus simulation
 - **Module 4: Cache Coherence**: Cache patterns impact analysis
+- **Module 5: Performance Evaluation**: Aggregate module-level performance metrics
 - **Run All Experiments**: Execute full benchmark suite at once
 
 ### Features per Section
@@ -67,6 +71,11 @@ This opens the dashboard in your default web browser at `http://localhost:8501`.
   - Bar chart: Speedup by scenario
 - **Detailed Results**: Expandable sections with full simulation metrics
 
+#### Module 2: Processor Scheduling
+- **Experiment Runner**: Executes Module 2 scripts through dashboard wrappers
+- **Results Table**: Displays structured scheduling metrics as a DataFrame
+- **Console Output**: Captures and shows stdout when provided by module code
+
 #### Module 4: Cache Coherence
 - **Results Table**: Time, speedup, and relative metrics
 - **Charts**:
@@ -74,9 +83,14 @@ This opens the dashboard in your default web browser at `http://localhost:8501`.
   - Bar chart: Speedup by pattern
 - **Insight Card**: Worst-case performance pattern
 
+#### Module 5: Performance Evaluation
+- **Experiment Runner**: Executes Module 5 scripts through dashboard wrappers
+- **Results Table**: Displays aggregated performance metrics as a DataFrame
+- **Console Output**: Captures and shows stdout when provided by module code
+
 #### Run All Experiments
 - **Single Button**: Execute all modules with default settings
-- **Summary View**: Aggregated results from all three modules
+- **Summary View**: Aggregated results from all integrated modules
 - **Time**: Takes 2–5 minutes depending on system
 
 ---
@@ -94,8 +108,8 @@ multi_core_simulation/
 │   └── module3_bus_communication.py # Bus contention simulation
 ├── MODULE_4_Cache_Coherence/
 │   └── FuLLCode.py                  # Cache coherence patterns
-├── MODULE_2_Processor_Scheduling/   # (Not yet integrated)
-├── MODULE_5_Performance_Evaluation/ # (Not yet integrated)
+├── MODULE_2_Processor_Scheduling/   # Processor scheduling experiments (integrated via wrapper)
+├── MODULE_5_Performance_Evaluation/ # Performance evaluation experiments (integrated via wrapper)
 └── README.md                        # Project overview
 ```
 
@@ -105,7 +119,7 @@ multi_core_simulation/
 
 ### Modular Architecture
 - `dashboard_utils.py`: Wrapper functions that clean console output (redirect stdout) and return pandas DataFrames for Streamlit display
-- Each module (`1`, `3`, `4`) maintains its own simulation logic
+- Each module (`1` through `5`) maintains its own simulation logic
 - Plotting functions refactored to return Matplotlib figures instead of calling `plt.show()`
 
 ### Session State Management
@@ -115,8 +129,10 @@ multi_core_simulation/
 
 ### Performance Considerations
 - **Module 1**: ~10–30 seconds (varies with problem size)
+- **Module 2**: Depends on experiment implementation and workload size
 - **Module 3**: ~20–40 seconds (includes 3 repeats per processor count)
 - **Module 4**: ~30–60 seconds (multiprocessing overhead)
+- **Module 5**: Depends on evaluation scope and aggregation logic
 - **All experiments**: ~2–5 minutes total
 
 ---
@@ -172,8 +188,6 @@ pip install matplotlib
 
 ## Future Enhancements
 
-- **Module 2**: Processor scheduling integration
-- **Module 5**: Aggregate performance evaluation across all modules
 - **Export Results**: CSV/JSON download functionality
 - **Comparison Views**: Side-by-side benchmark comparisons across runs
 - **Real-time Monitoring**: Live progress indicators for long-running experiments
