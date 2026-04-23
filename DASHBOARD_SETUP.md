@@ -162,6 +162,9 @@ pip install streamlit
 ### Issue: Experiments run very slowly
 **Solution**: Reduce problem size in Module 1, or skip "Run All Experiments" and run individual modules.
 
+### Issue: "Module 2 is taking too long"
+**Solution**: Module 2 (Processor Scheduling) is currently a planned enhancement and is not integrated into `app.py` yet. The dashboard currently runs only Modules 1, 3, and 4.
+
 ### Issue: Charts not displaying
 **Solution**: Ensure Matplotlib is installed:
 ```bash
