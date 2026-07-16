@@ -227,6 +227,10 @@ Through this project, the following concepts were practically explored:
 ---
 
 # Contributors
+- IT24200368 - K.A.D.S.Kasthuri 
+- IT24610806 - R.A.T.P.Obeysekara 
+- IT24103478 Withanage M.P.A 
+- IT24101346-K.T.W.Gunasekara
 
 Developed as a team project for:
 
