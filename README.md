@@ -149,15 +149,15 @@ This module collects and visualizes performance measurements from all implemente
 - Execution time
 - Speedup
 
-\[
+$$
 Speedup = \frac{T_{Sequential}}{T_{Parallel}}
-\]
+$$
 
 - Efficiency
 
-\[
+$$
 Efficiency = \frac{Speedup}{Number\ of\ Processors}
-\]
+$$
 
 - CPU utilization (%)
 - Memory usage (MB)
